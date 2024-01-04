@@ -18,23 +18,31 @@ renderer.render(scene, camera);
 
 
 // Add torus geometry
-const geometry = new THREE.TorusGeometry(10, 3, 16, 100);
-const material = new THREE.MeshStandardMaterial({ color: 0xff6347 });
+// Translation (axes): y axis is upward, z axis is backward, and x axis is to the right
+const geometry = new THREE.TorusKnotGeometry(6, 1.5, 92, 7);
+const material = new THREE.MeshStandardMaterial({ 
+  color: 0x666162, 
+  wireframe: true,
+  blendAlpha: true,
+  roughness: 0.4,
+  metalness: 1,
+});
 const torus = new THREE.Mesh(geometry, material);
+// torus.translateZ(-30); torus.translateX(-10);
 scene.add(torus);
 
 // Lights
-const pointLight = new THREE.PointLight(0xffffff, 100.0);
-pointLight.position.set(10, 1, 5);
-const ambientLight = new THREE.AmbientLight(0xffffff);
+const pointLight = new THREE.PointLight(0xffffff, 3000.0);
+pointLight.position.set(-10, 30, -25);
+const ambientLight = new THREE.AmbientLight(0xffffff, 2.0);
 scene.add(pointLight, ambientLight);
 
-// const lightHelper = new THREE.PointLightHelper(pointLight)
-const gridHelper = new THREE.GridHelper(200, 50);
-scene.add(gridHelper)
+const lightHelper = new THREE.PointLightHelper(pointLight)
+// const gridHelper = new THREE.GridHelper(200, 50);
+scene.add(lightHelper)
 
 // Orbit controls
-const controls = new OrbitControls(camera, renderer.domElement);
+// const controls = new OrbitControls(camera, renderer.domElement);
 
 // Adding random points (stars)
 function addStar() {
@@ -44,36 +52,60 @@ function addStar() {
 
   const [x, y, z] = Array(3)
     .fill()
-    .map(() => THREE.MathUtils.randFloatSpread(100));
+    .map(() => THREE.MathUtils.randFloatSpread(150));
 
   star.position.set(x, y, z);
   scene.add(star);
 }
 
-Array(200).fill().forEach(addStar);
+Array(300).fill().forEach(addStar);
 
 // Background
-const targetAspect = window.innerWidth / window.innerHeight;
-const imageAspect = 3840 / 2160;
-const factor = imageAspect / targetAspect;
+// const targetAspect = window.innerWidth / window.innerHeight;
+// const imageAspect = 3840 / 2160;
+// const factor = imageAspect / targetAspect;
 // When factor larger than 1, that means texture 'wilder' than target。 
 // we should scale texture height to target height and then 'map' the center  of texture to target， and vice versa.
 const spaceTexture = new THREE.TextureLoader().load('/earth_render_4k.png');
-scene.background = spaceTexture;
-scene.background.offset.x = factor > 1 ? (1 - 1 / factor) / 2 : 0;
-scene.background.repeat.x = factor > 1 ? 1 / factor : 1;
-scene.background.offset.y = factor > 1 ? 0 : (1 - factor) / 2;
-scene.background.repeat.y = factor > 1 ? 1 : factor;
+spaceTexture.colorSpace = THREE.SRGBColorSpace;
+const space = new THREE.Mesh(
+  new THREE.BoxGeometry(196,132,1),
+  new THREE.MeshStandardMaterial({ map: spaceTexture })
+);
+space.translateZ(-200); space.translateX(-110);
+space.rotateY(Math.PI/6);
+scene.add(space);
+// scene.background = spaceTexture;
+// scene.background.colorSpace = THREE.SRGBColorSpace;
+// scene.background.offset.x = factor > 1 ? (1 - 1 / factor) / 2 : 0;
+// scene.background.repeat.x = factor > 1 ? 1 / factor : 1;
+// scene.background.offset.y = factor > 1 ? 0 : (1 - factor) / 2;
+// scene.background.repeat.y = factor > 1 ? 1 : factor;
+
+
+function moveCamera() {
+  const t = document.body.getBoundingClientRect().top;
+
+  camera.position.z = t * -0.01;
+  // camera.position.x = t * -0.0001;
+  // camera.rotation.y = t * -0.0001;
+  torus.position.x = -20 + t * 0.07;
+  torus.position.y = -5 + t * 0.02;
+  torus.position.z = -40 + t * 0.1;
+}
+
+document.body.onscroll = moveCamera;
+moveCamera();
 
 
 // Animation Loop
 function animate() {
   requestAnimationFrame(animate);
-  torus.rotation.x += 0.01;
-  torus.rotation.y += 0.005;
-  torus.rotation.z += 0.01;
+  torus.rotation.x += 0.005;
+  // torus.rotation.y += 0.005;
+  // torus.rotation.z += 0.01;
 
-  controls.update();
+  // controls.update();
   renderer.render(scene, camera);
 }
 
